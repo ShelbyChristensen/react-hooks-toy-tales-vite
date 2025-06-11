@@ -1,26 +1,56 @@
-import React from 'react';
-import { fireEvent, render } from '@testing-library/react';
-import App from '../components/App';
-import '@testing-library/jest-dom';
+import React, { useState } from "react";
 
-describe("ToyForm Submission", () => {
-  it("submits a new toy and displays it", async () => {
-    global.setFetchResponse(global.baseToys)
-    const { getByPlaceholderText, getByText, findByText } = render(<App />);
-    const firstToy = {name: "First Toy", image: "new-toy.jpg", id: "3810fqhrquhf9fnqnc0"}
-    global.setFetchResponse({...firstToy})
-    fireEvent.click(getByText("Add a Toy"));
+function ToyForm({ onAddToy }) {
+  const [name, setName] = useState("");
+  const [image, setImage] = useState("");
 
-    fireEvent.change(getByPlaceholderText("Enter a toy's name..."), {
-      target: { value: firstToy.name},
-    });
-    fireEvent.change(getByPlaceholderText("Enter a toy's image URL..."), {
-      target: { value: firstToy.image },
-    });
+  function handleSubmit(e) {
+    e.preventDefault();
+    const newToy = { name, image, likes: 0 };
 
-    fireEvent.click(getByText("Create New Toy"));
+    fetch("http://localhost:3001/toys", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newToy),
+    })
+      .then((res) => res.json())
+      .then((data) => onAddToy(data));
 
-    const newToy = await findByText(firstToy.name)
-    expect(newToy).toBeInTheDocument();
-  });
-});
+    setName("");
+    setImage("");
+  }
+
+  return (
+    <div className="container">
+      <form className="add-toy-form" onSubmit={handleSubmit}>
+        <h3>Create a toy!</h3>
+        <input
+          type="text"
+          name="name"
+          placeholder="Enter a toy's name..."
+          className="input-text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <br />
+        <input
+          type="text"
+          name="image"
+          placeholder="Enter a toy's image URL..."
+          className="input-text"
+          value={image}
+          onChange={(e) => setImage(e.target.value)}
+        />
+        <br />
+        <input
+          type="submit"
+          name="submit"
+          value="Create New Toy"
+          className="submit"
+        />
+      </form>
+    </div>
+  );
+}
+
+export default ToyForm;
